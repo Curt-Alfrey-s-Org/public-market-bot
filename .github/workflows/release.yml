@@ -51,7 +51,7 @@ jobs:
         fi
     
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         body_path: release_notes.md
         draft: false
@@ -75,7 +75,7 @@ jobs:
         zip -r market-pie5-bot-${{ steps.release_notes.outputs.version }}.zip market-pie5-bot/
     
     - name: Upload release assets
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         files: |
           dist/market-pie5-bot-${{ steps.release_notes.outputs.version }}.tar.gz
