@@ -51,7 +51,7 @@ jobs:
           --cov-report=term-missing:skip-covered \
           --cov-fail-under=0
     - name: Upload dry-run mode test results
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: mode-override-tests-${{ matrix.python-version }}
         path: |
@@ -115,7 +115,7 @@ jobs:
           --cov-report=term-missing:skip-covered \
           --cov-fail-under=0
     - name: Upload backend core test results
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: backend-core-tests-${{ matrix.python-version }}
         path: |
@@ -197,7 +197,7 @@ jobs:
           --cov-fail-under=0
     - name: Upload backend API test results
       if: always()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: backend-api-tests-${{ matrix.python-version }}
         path: |
@@ -246,7 +246,7 @@ jobs:
       run: |
         python tests/ci_yfinance_mode_only.py
     - name: Upload backend self-test report
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: backend-selftest-${{ matrix.python-version }}
         path: |
@@ -312,7 +312,7 @@ jobs:
           --cov-fail-under=0
       continue-on-error: true
     - name: Upload yfinance subset test results
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: yfinance-subset-tests-${{ matrix.python-version }}
         path: |
