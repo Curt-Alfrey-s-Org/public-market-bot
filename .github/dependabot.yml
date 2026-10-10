@@ -1,0 +1,89 @@
+# Dependabot configuration for automated dependency updates and security alerts
+# Documentation: https://docs.github.com/en/code-security/dependabot
+
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    # Automatically merge minor and patch updates for security updates
+    open-pull-requests-limit: 5
+    reviewers:
+      - "operator"
+    labels:
+      - "dependencies"
+      - "security"
+      - "python"
+    # Group updates to reduce PR noise
+    groups:
+      development-dependencies:
+        patterns:
+          - "pytest*"
+          - "black"
+          - "flake8"
+          - "pylint"
+          - "isort"
+          - "safety"
+          - "bandit"
+      production-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "pytest*"
+          - "black"
+          - "flake8"
+          - "pylint"
+          - "isort"
+          - "safety"
+          - "bandit"
+    # Security updates take priority
+    versioning-strategy: "increase"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+
+  # Node.js dependencies (for web GUI enhancements)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "operator"
+    labels:
+      - "dependencies"
+      - "security"
+      - "javascript"
+    # Group Node.js updates
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
+    versioning-strategy: "increase"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "operator"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"

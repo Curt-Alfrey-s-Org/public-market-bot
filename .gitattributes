@@ -1,0 +1,12 @@
+# Line endings: build on Windows, run on Linux Mint (python3 + venv).
+# Enforce LF so shell scripts and Python work correctly on Linux.
+
+* text=auto eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf

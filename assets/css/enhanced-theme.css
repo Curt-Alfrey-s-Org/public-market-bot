@@ -1,0 +1,445 @@
+/* Enhanced Visual Theme for Market Pie5 Bot - Modern Glassmorphism & Animations */
+/* Version 2.0 - Movable Dashboard Edition */
+
+/* Enhanced Color Palette */
+:root {
+    /* Primary Colors */
+    --primary: #1d9bf0;
+    --primary-dark: #1a8cd8;
+    --primary-light: #4fb3f6;
+    --primary-alpha: rgba(29, 155, 240, 0.1);
+    
+    /* Success/Error Colors */
+    --success: #10b981;
+    --success-dark: #059669;
+    --success-alpha: rgba(16, 185, 129, 0.1);
+    --danger: #dc2626;
+    --danger-dark: #b91c1c;
+    --danger-alpha: rgba(220, 38, 38, 0.1);
+    --warning: #f59e0b;
+    --warning-alpha: rgba(245, 158, 11, 0.1);
+    
+    /* Background Colors - Enhanced */
+    --bg-primary: #0a0e14;
+    --bg-secondary: #13171f;
+    --bg-card: #1a1f2e;
+    --bg-elevated: #212836;
+    --bg-overlay: rgba(26, 31, 46, 0.95);
+    
+    /* Text Colors */
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-tertiary: #6e7681;
+    --text-muted: #484f58;
+    
+    /* Border & Shadow */
+    --border: #30363d;
+    --border-light: rgba(255, 255, 255, 0.1);
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.7);
+    
+    /* Glassmorphism */
+    --glass-bg: rgba(26, 31, 46, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-full: 9999px;
+    
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Modern Card Styles with Glassmorphism */
+.modern-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.1) 50%, 
+        transparent 100%);
+}
+
+.modern-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-alpha);
+}
+
+/* Elevated Card (more prominent) */
+.card-elevated {
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-md);
+}
+
+.card-elevated:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+/* Gradient Cards */
+.card-gradient-primary {
+    background: linear-gradient(135deg, 
+        var(--bg-card) 0%, 
+        rgba(29, 155, 240, 0.05) 100%);
+    border: 1px solid var(--primary-alpha);
+}
+
+.card-gradient-success {
+    background: linear-gradient(135deg, 
+        var(--bg-card) 0%, 
+        rgba(16, 185, 129, 0.05) 100%);
+    border: 1px solid var(--success-alpha);
+}
+
+.card-gradient-danger {
+    background: linear-gradient(135deg, 
+        var(--bg-card) 0%, 
+        rgba(220, 38, 38, 0.05) 100%);
+    border: 1px solid var(--danger-alpha);
+}
+
+/* Enhanced Button Styles */
+.btn-modern {
+    position: relative;
+    padding: 12px 24px;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    overflow: hidden;
+    font-size: 14px;
+}
+
+.btn-modern::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-modern:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    box-shadow: 0 4px 12px var(--primary-alpha);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(29, 155, 240, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+    color: white;
+    box-shadow: 0 4px 12px var(--success-alpha);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger) 0%, var(--danger-dark) 100%);
+    color: white;
+    box-shadow: 0 4px 12px var(--danger-alpha);
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+}
+
+/* Stat Card Enhancements */
+.stat-card {
+    position: relative;
+    overflow: visible;
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(29, 155, 240, 0.03) 100%);
+    opacity: 0;
+    transition: opacity var(--transition-base);
+    pointer-events: none;
+}
+
+.stat-card:hover::after {
+    opacity: 1;
+}
+
+/* Number Animation Classes */
+.animate-number {
+    font-variant-numeric: tabular-nums;
+    transition: all var(--transition-base);
+}
+
+.currency::before {
+    content: '$';
+}
+
+.percentage::after {
+    content: '%';
+}
+
+/* Enhanced Tab Styles */
+.tab-container {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xs);
+}
+
+.tab-selected {
+    background: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-md);
+}
+
+/* Loading Spinner - Modern */
+.spinner-modern {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Glow Effect */
+.glow-primary {
+    box-shadow: 0 0 20px var(--primary-alpha);
+}
+
+.glow-success {
+    box-shadow: 0 0 20px var(--success-alpha);
+}
+
+.glow-danger {
+    box-shadow: 0 0 20px var(--danger-alpha);
+}
+
+/* Enhanced Hover States */
+.hover-lift {
+    transition: transform var(--transition-base);
+}
+
+.hover-lift:hover {
+    transform: translateY(-4px);
+}
+
+/* Badge Styles */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+    gap: 6px;
+}
+
+.badge-primary {
+    background: var(--primary-alpha);
+    color: var(--primary);
+}
+
+.badge-success {
+    background: var(--success-alpha);
+    color: var(--success);
+}
+
+.badge-danger {
+    background: var(--danger-alpha);
+    color: var(--danger);
+}
+
+.badge-warning {
+    background: var(--warning-alpha);
+    color: var(--warning);
+}
+
+/* Chart Container Enhancements */
+.chart-container {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--border);
+    position: relative;
+}
+
+.chart-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at top right, var(--primary-alpha) 0%, transparent 50%);
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* Tooltip Enhancements */
+.tooltip-modern {
+    position: relative;
+}
+
+.tooltip-modern::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    padding: 8px 12px;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-base);
+    box-shadow: var(--shadow-md);
+}
+
+.tooltip-modern:hover::after {
+    opacity: 1;
+}
+
+/* Scrollbar Enhancements */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Advanced Animation Classes */
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out;
+}
+
+@keyframes scale-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-scale-in {
+    animation: scale-in 0.4s ease-out;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+    .modern-card {
+        border-radius: var(--radius-md);
+    }
+    
+    .btn-modern {
+        padding: 10px 20px;
+        font-size: 13px;
+    }
+}
+
+/* Focus Styles for Accessibility */
+*:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Selection Colors */
+::selection {
+    background: var(--primary-alpha);
+    color: var(--text-primary);
+}
+
+/* Print Styles */
+@media print {
+    .modern-card {
+        border: 1px solid #ddd;
+        box-shadow: none;
+        page-break-inside: avoid;
+    }
+}

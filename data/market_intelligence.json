@@ -1,0 +1,12 @@
+{
+  "AAPL": [
+    {
+      "type": "Product",
+      "date": "2026-02-02",
+      "description": "Apple announces new product launch",
+      "impact": "medium",
+      "recommendation": "Monitor for sentiment boost",
+      "stored_at": "2026-02-02T00:11:43.691564"
+    }
+  ]
+}

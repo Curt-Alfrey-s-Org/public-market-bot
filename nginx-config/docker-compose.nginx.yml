@@ -1,0 +1,22 @@
+# Market Bot Nginx container for Cloudflare Tunnel (cf_alfa).
+# Run from market-bot repo root: docker-compose -f nginx-config/docker-compose.nginx.yml up -d
+# Tunnel route in Zero Trust: market-bot.example.com → http://market-bot-nginx:80
+# Requires: Frontend on host at :80; cf_alfa and this container on same network (tunnel_network).
+
+version: '3.8'
+
+services:
+  market-bot-nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: market-bot-nginx
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - tunnel_network
+
+networks:
+  tunnel_network:
+    external: true

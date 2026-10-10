@@ -1,0 +1,45 @@
+{
+  "duration_seconds": 180,
+  "min_trades_required": 5,
+  "grids": {
+    "risk_and_sizing": [
+      {
+        "BOT_RISK_THRESHOLD": 0.02,
+        "BOT_POSITION_SIZE": 0.01,
+        "BOT_STOP_LOSS_PERCENT": 0.03,
+        "BOT_TAKE_PROFIT_PERCENT": 0.06
+      },
+      {
+        "BOT_RISK_THRESHOLD": 0.025,
+        "BOT_POSITION_SIZE": 0.015,
+        "BOT_STOP_LOSS_PERCENT": 0.035,
+        "BOT_TAKE_PROFIT_PERCENT": 0.07
+      },
+      {
+        "BOT_RISK_THRESHOLD": 0.03,
+        "BOT_POSITION_SIZE": 0.02,
+        "BOT_STOP_LOSS_PERCENT": 0.04,
+        "BOT_TAKE_PROFIT_PERCENT": 0.08
+      }
+    ],
+    "ml_filter": [
+      {
+        "ENABLE_ML_SIGNAL_FILTER": "false"
+      }
+    ],
+    "min_bars": [
+      {"STRATEGY_MIN_BARS": 50},
+      {"STRATEGY_MIN_BARS": 75}
+    ]
+  },
+  "base_overrides": {
+    "PAPER_TRADING_MODE": "true",
+    "SCHWAB_SANDBOX_MODE": "false",
+    "DRY_RUN_MODE": "false",
+    "BACKTEST_MODE": "false",
+    "BOT_ENABLE_THROTTLING": "true",
+    "EXIT_REFRESH_PRICE": "true",
+    "TRADING_FREQUENCY": 2,
+    "BOT_MAX_OPEN_POSITIONS": 5
+  }
+}

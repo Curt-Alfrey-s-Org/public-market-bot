@@ -1,0 +1,36 @@
+{
+  "name": "market-pie5-bot",
+  "version": "1.0.0",
+  "description": "Trading bot with enhanced web GUI - Visual assets and styling. Packages serve as fallbacks for CDN resources and enable offline development.",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'Build complete - CSS and assets ready'",
+    "watch": "echo 'Watching for changes...'",
+    "dev": "echo 'Development mode'",
+    "setup-local": "echo 'Copy node_modules to assets for local serving if CDN unavailable'"
+  },
+  "keywords": [
+    "trading",
+    "bot",
+    "web-gui",
+    "dashboard"
+  ],
+  "author": "Market Pie5",
+  "license": "MIT",
+  "dependencies": {
+    "animate.css": "^4.1.1",
+    "chart.js": "^4.5.1",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^4.1.0"
+  },
+  "devDependencies": {
+    "@fortawesome/fontawesome-free": "^7.1.0"
+  },
+  "comments": {
+    "purpose": "These dependencies serve dual purposes:",
+    "1": "Fallback when CDN resources are unavailable (offline mode)",
+    "2": "Local development without internet dependency",
+    "3": "Version control and consistency with CDN versions",
+    "usage": "By default, web_gui.py uses CDN. Set serve_locally=True to use local packages."
+  }
+}

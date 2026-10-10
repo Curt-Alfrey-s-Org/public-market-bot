@@ -1,0 +1,69 @@
+[run]
+# Measure branch coverage
+branch = True
+
+# Files to measure: the deployed API service (backend test suite target).
+# Root-level legacy scripts are excluded until the deferred root cleanup.
+source =
+    api
+    database
+
+# Omit these files from coverage
+omit =
+    */venv/*
+    */node_modules/*
+    */.git/*
+    */__pycache__/*
+    */test_*.py
+    */demo_*.py
+    */verify_*.py
+    */validate_*.py
+    setup.py
+    */migrations/*
+    */tests/*
+    .tox/*
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code:
+    def __repr__
+    if self\.debug
+    
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run:
+    if 0:
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    
+    # Don't complain about abstract methods
+    @(abc\.)?abstractmethod
+    
+    # Don't complain about pass statements
+    pass
+    
+    # Don't complain about ellipsis
+    \.\.\.
+
+# Show lines that are missing coverage
+show_missing = True
+
+# Fail if coverage falls below this percentage.
+# Ratchet: set at current measured API coverage (27.6% as of 2026-06).
+# Raise toward 60 as tests are added; never lower without documented reason.
+fail_under = 25
+
+# Precision for coverage percentage
+precision = 2
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml

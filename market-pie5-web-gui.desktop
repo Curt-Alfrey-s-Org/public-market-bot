@@ -1,0 +1,39 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Market Pie5 Web Dashboard
+Comment=Browser-based trading dashboard - Compatible with Raspberry Pi 5, Linux Mint, Ubuntu, and Debian
+Exec=/usr/local/bin/market-pie5-launch-web-gui
+Icon=market-pie5-icon
+Terminal=true
+Categories=Finance;Office;Network;
+Keywords=trading;stock;bot;finance;web;dashboard;linux;
+StartupNotify=true
+StartupWMClass=market-pie5-web-gui
+Path=
+X-Desktop-File-Install-Version=0.26
+
+# Installation Instructions:
+# For single user (current user only):
+#   1. Copy to ~/.local/share/applications/
+#      cp market-pie5-web-gui.desktop ~/.local/share/applications/
+#   2. Update desktop database:
+#      update-desktop-database ~/.local/share/applications/
+#
+# For all users (system-wide, requires sudo):
+#   1. Copy to /usr/share/applications/
+#      sudo cp market-pie5-web-gui.desktop /usr/share/applications/
+#   2. Copy icon to /usr/share/pixmaps/
+#      sudo cp market-pie5-icon.svg /usr/share/pixmaps/market-pie5-icon.svg
+#   3. Update desktop database:
+#      sudo update-desktop-database /usr/share/applications/
+#
+# For autostart on login (all users):
+#   1. Copy to /etc/xdg/autostart/ (system-wide) or ~/.config/autostart/ (user-specific)
+#      sudo cp market-pie5-web-gui.desktop /etc/xdg/autostart/
+#      OR
+#      cp market-pie5-web-gui.desktop ~/.config/autostart/
+#   2. Update desktop database:
+#      sudo update-desktop-database /etc/xdg/autostart/
+#      OR
+#      update-desktop-database ~/.config/autostart/

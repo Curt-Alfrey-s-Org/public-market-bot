@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run tests
+      run: |
+        python -m unittest discover -s . -p "test_*.py" -v
+      env:
+        PAPER_TRADING_MODE: "true"
+        SCHWAB_SANDBOX_MODE: "false"
+    
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Extract version from tag
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+        # Generate changelog for this version
+        if [ -f CHANGELOG.md ]; then
+          # Extract section for this version from CHANGELOG.md
+          sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$ d' > release_notes.md
+        else
+          echo "Release $VERSION" > release_notes.md
+          echo "" >> release_notes.md
+          echo "See commit history for changes." >> release_notes.md
+        fi
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Create distribution archives
+      run: |
+        # Create a clean distribution without development files
+        mkdir -p dist/market-pie5-bot
+        
+        # Copy essential files
+        cp -r *.py requirements.txt README.md LICENSE CHANGELOG.md dist/market-pie5-bot/ 2>/dev/null || true
+        cp -r assets dist/market-pie5-bot/ 2>/dev/null || true
+        
+        # Create archives
+        cd dist
+        tar -czf market-pie5-bot-${{ steps.release_notes.outputs.version }}.tar.gz market-pie5-bot/
+        zip -r market-pie5-bot-${{ steps.release_notes.outputs.version }}.zip market-pie5-bot/
+    
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          dist/market-pie5-bot-${{ steps.release_notes.outputs.version }}.tar.gz
+          dist/market-pie5-bot-${{ steps.release_notes.outputs.version }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,206 @@
+name: End-to-End Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.11'
+    
+    - name: Cache pip packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-integration-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-integration-
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-timeout pytest-asyncio
+        pip install -r requirements.txt
+    
+    - name: Run integration tests
+      env:
+        ENABLE_PDT_RULES: 'false'
+        PAPER_TRADING_MODE: 'true'
+        SCHWAB_SANDBOX_MODE: 'true'
+        SCHWAB_API_ENABLED: 'off'
+        NON_INTERACTIVE: 'true'
+        RESTART_RECOVERY_ENABLED: 'false'
+        MARKET_DATA_PROVIDER: 'YAHOOQUERY'
+        BOT_ENABLE_AI: 'false'
+        BOT_ENABLE_ML: 'false'
+        ENABLE_STOCK_SCREENER: 'false'
+        ENABLE_EMAIL_ALERTS: 'false'
+      run: |
+        echo "## Integration Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Run integration tests with markers
+        if pytest -v -m "integration" test_*.py --tb=short --timeout=60 2>&1 | tee integration-output.txt; then
+          echo "✅ **All integration tests passed**" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Integration tests failed**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<details><summary>View test output</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -50 integration-output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
+          exit 1
+        fi
+      continue-on-error: false
+  
+  e2e-bot-modes:
+    name: E2E Bot Mode Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        bot-mode:
+          - name: "Paper Trading (yfinance)"
+            env:
+              PAPER_TRADING_MODE: 'true'
+              SCHWAB_SANDBOX_MODE: 'false'
+            # Paper trading without sandbox uses yfinance for price data
+          - name: "Paper Trading (Sandbox API)"
+            env:
+              PAPER_TRADING_MODE: 'true'
+              SCHWAB_SANDBOX_MODE: 'true'
+            # Paper trading with sandbox uses Schwab's sandbox API
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.11'
+    
+    - name: Cache pip packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-e2e-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-e2e-
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-timeout
+        pip install -r requirements.txt
+    
+    - name: Run E2E tests for ${{ matrix.bot-mode.name }}
+      env:
+        ENABLE_PDT_RULES: 'false'
+        PAPER_TRADING_MODE: ${{ matrix.bot-mode.env.PAPER_TRADING_MODE }}
+        SCHWAB_SANDBOX_MODE: ${{ matrix.bot-mode.env.SCHWAB_SANDBOX_MODE }}
+        SCHWAB_API_ENABLED: 'off'
+        NON_INTERACTIVE: 'true'
+        RESTART_RECOVERY_ENABLED: 'false'
+        MARKET_DATA_PROVIDER: 'YAHOOQUERY'
+        BOT_ENABLE_AI: 'false'
+        BOT_ENABLE_ML: 'false'
+        ENABLE_STOCK_SCREENER: 'false'
+      run: |
+        echo "## E2E Tests - ${{ matrix.bot-mode.name }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Configuration:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Paper Trading: ${{ matrix.bot-mode.env.PAPER_TRADING_MODE }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Sandbox Mode: ${{ matrix.bot-mode.env.SCHWAB_SANDBOX_MODE }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Run E2E tests with markers
+        if pytest -v -m "e2e" test_*.py --tb=short --timeout=120 2>&1 | tee e2e-output.txt; then
+          echo "✅ **E2E tests passed for ${{ matrix.bot-mode.name }}**" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **E2E tests failed for ${{ matrix.bot-mode.name }}**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<details><summary>View test output</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -50 e2e-output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
+          exit 1
+        fi
+      continue-on-error: false
+  
+  non-interactive-validation:
+    name: Non-Interactive Mode Validation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.11'
+    
+    - name: Cache pip packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-validation-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-validation-
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Test non-interactive E2E tests
+      run: |
+        echo "## Non-Interactive E2E Test Validation" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Run non-interactive E2E test
+        if python test_e2e_non_interactive.py 2>&1 | tee non-interactive-output.txt; then
+          echo "✅ **Non-interactive E2E test passed**" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Non-interactive E2E test failed**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<details><summary>View output</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat non-interactive-output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
+          exit 1
+        fi
+      env:
+        ENABLE_PDT_RULES: 'false'
+        PAPER_TRADING_MODE: 'true'
+        SCHWAB_SANDBOX_MODE: 'true'
+        SCHWAB_API_ENABLED: 'off'
+        NON_INTERACTIVE: 'true'
+        RESTART_RECOVERY_ENABLED: 'false'
+        MARKET_DATA_PROVIDER: 'YAHOOQUERY'
+      continue-on-error: false

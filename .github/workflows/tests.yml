@@ -1,0 +1,320 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  dry-run-mode:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Cache pip packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov pytest-xdist pytest-timeout pytest-asyncio
+        pip install -r requirements.txt
+    - name: Create reports directory
+      run: mkdir -p reports
+    - name: Run dry-run (Live) mode tests
+      env:
+        ENABLE_PDT_RULES: 'false'
+        NON_INTERACTIVE: 'true'
+      run: |
+        pytest \
+          test_mode_override.py \
+          -v \
+          --tb=short \
+          --maxfail=10 \
+          --junit-xml=reports/junit_mode_override.xml \
+          --cov=. \
+          --cov-report=xml:coverage_mode_override.xml \
+          --cov-report=term-missing:skip-covered \
+          --cov-fail-under=0
+    - name: Upload dry-run mode test results
+      uses: actions/upload-artifact@v6
+      with:
+        name: mode-override-tests-${{ matrix.python-version }}
+        path: |
+          reports/junit_mode_override.xml
+          coverage_mode_override.xml
+
+  backend-core:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Cache pip packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov pytest-xdist pytest-timeout pytest-asyncio
+        pip install -r requirements.txt
+    - name: Create reports directory
+      run: mkdir -p reports
+    - name: Run backend core tests (order types, signals, shorts)
+      env:
+        ENABLE_PDT_RULES: 'false'
+        PAPER_TRADING_MODE: 'false'
+        SCHWAB_SANDBOX_MODE: 'false'
+        SCHWAB_API_ENABLED: 'on'
+        DRY_RUN_MODE: 'true'
+        NON_INTERACTIVE: 'true'
+        MARKET_DATA_PROVIDER: 'YAHOOQUERY'
+        BOT_ENABLE_AI: 'false'
+        BOT_ENABLE_ML: 'false'
+        RESTART_RECOVERY_ENABLED: 'false'
+      run: |
+        pytest \
+          test_order_type_configuration.py \
+          test_order_payload_builder.py \
+          test_strategy_signals.py \
+          test_short_selling.py \
+          tests/backend/test_exit_prices.py \
+          tests/backend/test_short_cover_exit_prices.py \
+          -v \
+          --tb=short \
+          --maxfail=10 \
+          --junit-xml=reports/junit_backend_core.xml \
+          --cov=. \
+          --cov-report=xml:coverage_backend_core.xml \
+          --cov-report=term-missing:skip-covered \
+          --cov-fail-under=0
+    - name: Upload backend core test results
+      uses: actions/upload-artifact@v6
+      with:
+        name: backend-core-tests-${{ matrix.python-version }}
+        path: |
+          reports/junit_backend_core.xml
+          coverage_backend_core.xml
+
+  backend-api:
+    # FastAPI backend suite (auth, control-endpoint authorization, config, tokens,
+    # error handling, ...) plus the security-config and auth-integration tests.
+    # Added by the 2026-09-25 security review follow-up: tests/backend was not run in CI.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Cache pip packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov pytest-xdist pytest-timeout pytest-asyncio
+        pip install -r requirements.txt
+    - name: Create reports directory
+      run: mkdir -p reports
+    - name: Generate throwaway per-run credentials
+      # The API refuses to start without these. Values are random for this run only
+      # (never real secrets) and are masked in the log.
+      run: |
+        for var in BOT_API_KEY POSTGRES_PASSWORD ADMIN_PASSWORD DIRECTOR_PASSWORD USER_PASSWORD JWT_SECRET; do
+          value=$(python -c 'import secrets; print(secrets.token_urlsafe(32))')
+          echo "::add-mask::$value"
+          echo "$var=$value" >> "$GITHUB_ENV"
+        done
+    - name: Run backend API tests
+      env:
+        ENVIRONMENT: 'development'
+        DATABASE_URL: 'sqlite:///${{ runner.temp }}/backend_api_test.db'
+        # api/routes/network.py touches iptables on import: never let it run sudo on the runner.
+        IPTABLES_PATH: '/bin/true'
+        IPTABLES_USE_SUDO: 'false'
+        ENABLE_PDT_RULES: 'false'
+        PAPER_TRADING_MODE: 'true'
+        SCHWAB_SANDBOX_MODE: 'false'
+        SCHWAB_API_ENABLED: 'off'
+        NON_INTERACTIVE: 'true'
+        BOT_ENABLE_AI: 'false'
+        BOT_ENABLE_ML: 'false'
+        RESTART_RECOVERY_ENABLED: 'false'
+      # test_exit_prices.py / test_short_cover_exit_prices.py already run in backend-core.
+      run: |
+        pytest \
+          tests/backend \
+          tests/test_security_config.py \
+          tests/test_auth_integration.py \
+          tests/test_alembic_chain.py \
+          --ignore=tests/backend/test_exit_prices.py \
+          --ignore=tests/backend/test_short_cover_exit_prices.py \
+          -v \
+          --tb=short \
+          --maxfail=25 \
+          --timeout=300 \
+          --junit-xml=reports/junit_backend_api.xml \
+          --cov=api \
+          --cov-report=xml:coverage_backend_api.xml \
+          --cov-report=term-missing:skip-covered \
+          --cov-fail-under=0
+    - name: Upload backend API test results
+      if: always()
+      uses: actions/upload-artifact@v6
+      with:
+        name: backend-api-tests-${{ matrix.python-version }}
+        path: |
+          reports/junit_backend_api.xml
+          coverage_backend_api.xml
+
+  backend-yfinance-regression:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Cache pip packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov pytest-xdist pytest-timeout pytest-asyncio
+        pip install -r requirements.txt
+    - name: Create reports directory
+      run: mkdir -p reports
+    - name: Run backend yfinance-mode suite (self-test runner)
+      env:
+        ENABLE_PDT_RULES: 'false'
+        PAPER_TRADING_MODE: 'true'
+        SCHWAB_SANDBOX_MODE: 'false'
+        SCHWAB_API_ENABLED: 'off'
+        NON_INTERACTIVE: 'true'
+        MARKET_DATA_PROVIDER: 'YAHOOQUERY'
+        BOT_ENABLE_AI: 'false'
+        BOT_ENABLE_ML: 'false'
+        RESTART_RECOVERY_ENABLED: 'false'
+      run: |
+        python tests/ci_yfinance_mode_only.py
+    - name: Upload backend self-test report
+      uses: actions/upload-artifact@v6
+      with:
+        name: backend-selftest-${{ matrix.python-version }}
+        path: |
+          reports/selftest_yfinance_mode.json
+
+  yfinance-subset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Cache pip packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov pytest-xdist pytest-timeout pytest-asyncio
+        pip install -r requirements.txt
+    - name: Create reports directory
+      run: mkdir -p reports
+    - name: Run tests (yfinance-only subset)
+      env:
+        ENABLE_PDT_RULES: 'false'
+        PAPER_TRADING_MODE: 'true'
+        SCHWAB_SANDBOX_MODE: 'false'
+        SCHWAB_API_ENABLED: 'off'
+        NON_INTERACTIVE: 'true'
+        MARKET_DATA_PROVIDER: 'YAHOOQUERY'
+        BOT_ENABLE_AI: 'false'
+        BOT_ENABLE_ML: 'false'
+        ENABLE_STOCK_SCREENER: 'false'
+        ENABLE_EMAIL_ALERTS: 'false'
+        RESTART_RECOVERY_ENABLED: 'false'
+      run: |
+        pytest \
+          test_batch_pricing.py \
+          test_yfinance_init.py \
+          test_yfinance_sim.py \
+          test_price_fetch.py \
+          -n auto \
+          -v \
+          --tb=short \
+          -k "not live and not mode_isolation and not sandbox_live_distinction and not main_py_integrity" \
+          --maxfail=10 \
+          --junit-xml=reports/junit_subset.xml \
+          --cov=. \
+          --cov-report=xml:coverage_subset.xml \
+          --cov-report=term-missing:skip-covered \
+          --cov-config=.coveragerc \
+          --cov-fail-under=0
+      continue-on-error: true
+    - name: Upload yfinance subset test results
+      uses: actions/upload-artifact@v6
+      with:
+        name: yfinance-subset-tests-${{ matrix.python-version }}
+        path: |
+          reports/junit_subset.xml
+          coverage_subset.xml

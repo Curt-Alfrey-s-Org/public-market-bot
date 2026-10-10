@@ -1,0 +1,153 @@
+name: Copilot Sentinel
+
+# This workflow acts as a required status check to prevent premature PR merges
+# when GitHub Copilot is still working on the PR.
+#
+# How it works:
+# 1. Runs on every PR event (opened, synchronize, reopened)
+# 2. Checks if the PR author is a Copilot bot
+# 3. Checks commit messages and PR state to determine if Copilot is still working
+# 4. Provides a clear status that can be required before merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  copilot-status:
+    name: Copilot Work Status
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    
+    steps:
+    - name: Check if PR is from Copilot
+      id: check_copilot
+      uses: actions/github-script@v8
+      with:
+        script: |
+          const pr = context.payload.pull_request;
+          const prNumber = pr.number;
+          const author = pr.user.login;
+          
+          console.log(`PR #${prNumber} author: ${author}`);
+          console.log(`PR title: ${pr.title}`);
+          console.log(`PR branch: ${pr.head.ref}`);
+          
+          // Check if PR is from Copilot
+          const isCopilotPR = author.includes('copilot') || 
+                              pr.head.ref.includes('copilot/') ||
+                              pr.title.toLowerCase().includes('copilot');
+          
+          core.setOutput('is_copilot_pr', isCopilotPR);
+          console.log(`Is Copilot PR: ${isCopilotPR}`);
+          
+          if (!isCopilotPR) {
+            console.log('Not a Copilot PR - check passes automatically');
+            return true;
+          }
+          
+          // For Copilot PRs, check various signals to determine if work is complete
+          
+          // 1. Check for "copilot-completed" label
+          const hasCompletedLabel = pr.labels.some(label => 
+            label.name === 'copilot-completed' || label.name === 'ready-to-merge'
+          );
+          
+          if (hasCompletedLabel) {
+            console.log('PR has copilot-completed or ready-to-merge label - work is done');
+            return true;
+          }
+          
+          // 2. Check for specific markers in recent commits
+          const commits = await github.rest.pulls.listCommits({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: prNumber
+          });
+          
+          const recentCommit = commits.data[commits.data.length - 1];
+          const lastCommitMessage = recentCommit?.commit?.message || '';
+          
+          console.log(`Last commit message: ${lastCommitMessage}`);
+          
+          // Check if the last commit indicates completion
+          const completionMarkers = [
+            'final',
+            'complete',
+            'finished',
+            'done',
+            'ready for review',
+            'ready to merge'
+          ];
+          
+          const hasCompletionMarker = completionMarkers.some(marker => 
+            lastCommitMessage.toLowerCase().includes(marker)
+          );
+          
+          if (hasCompletionMarker) {
+            console.log('Last commit indicates work is complete');
+            return true;
+          }
+          
+          // 3. Check commit timing - if last commit was more than 5 minutes ago, likely done
+          const lastCommitDate = new Date(recentCommit.commit.committer.date);
+          const now = new Date();
+          const minutesSinceLastCommit = (now - lastCommitDate) / 1000 / 60;
+          
+          console.log(`Minutes since last commit: ${minutesSinceLastCommit.toFixed(1)}`);
+          
+          if (minutesSinceLastCommit > 5) {
+            console.log('Last commit was >5 minutes ago - assuming work is complete');
+            return true;
+          }
+          
+          // 4. Check for "work in progress" indicators
+          const wipMarkers = [
+            'wip',
+            'work in progress',
+            'initial plan',
+            'progress:',
+            'todo',
+            'implementing'
+          ];
+          
+          const hasWipMarker = wipMarkers.some(marker => 
+            lastCommitMessage.toLowerCase().includes(marker) ||
+            pr.title.toLowerCase().includes(marker)
+          );
+          
+          if (hasWipMarker) {
+            console.log('Work in progress markers found - Copilot is still working');
+            core.setFailed('⏳ GitHub Copilot is still working on this PR. Please wait for completion before merging.');
+            return false;
+          }
+          
+          // Default: if no clear signals, assume work is ongoing for recent Copilot PRs
+          if (minutesSinceLastCommit < 2) {
+            console.log('Recent activity detected - Copilot may still be working');
+            core.setFailed('⏳ GitHub Copilot appears to be working on this PR. Please wait a few minutes and try again.');
+            return false;
+          }
+          
+          console.log('No clear WIP signals - allowing merge');
+          return true;
+    
+    - name: Set status
+      if: steps.check_copilot.outputs.is_copilot_pr == 'true'
+      run: |
+        echo "✅ Copilot work check completed"
+        echo "This PR has passed the Copilot work status check"
+        echo ""
+        echo "To mark a Copilot PR as ready to merge:"
+        echo "1. Add the 'copilot-completed' or 'ready-to-merge' label, OR"
+        echo "2. Include 'complete', 'finished', or 'ready' in the final commit message, OR"
+        echo "3. Wait 5 minutes after the last commit"
+    
+    - name: Not a Copilot PR
+      if: steps.check_copilot.outputs.is_copilot_pr != 'true'
+      run: |
+        echo "✅ Not a Copilot PR - check passes automatically"

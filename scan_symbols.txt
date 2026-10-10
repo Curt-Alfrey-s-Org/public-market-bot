@@ -1,0 +1,37 @@
+# ============================================================================
+# Stock Symbols Fallback List (RARELY USED)
+# ============================================================================
+#
+# ⚠️  IMPORTANT: This file is ONLY used when ENABLE_STOCK_SCREENER=false
+#
+# By default, the bot uses dynamic stock discovery (TOS-like behavior):
+#   - Automatically scans 300+ stocks from S&P 500, NASDAQ-100, etc.
+#   - Filters by your .env criteria (price, volume, volatility)
+#   - Ranks stocks by quality (momentum, volume, liquidity, sentiment)
+#   - Selects top N stocks daily (MAX_DISCOVERED_STOCKS in .env)
+#
+# This static file is a fallback for testing or when you want to:
+#   - Trade only specific stocks you select
+#   - Test without API calls (offline development)
+#   - Override dynamic discovery temporarily
+#
+# To use this file instead of dynamic discovery:
+#   1. Set ENABLE_STOCK_SCREENER=false in your .env file
+#   2. Add your stock symbols below (one per line)
+#   3. Remove the # comment from each symbol you want to trade
+#
+# ============================================================================
+# Minimal Fallback Symbols (uncommented for testing):
+# ============================================================================
+
+AAPL
+MSFT
+
+# ============================================================================
+# To add more symbols, just add them below (one per line, no # comment):
+# ============================================================================
+# GOOGL
+# TSLA
+# NVDA
+# AMZN
+# META

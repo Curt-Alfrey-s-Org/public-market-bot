@@ -1,0 +1,139 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.11'
+    
+    - name: Cache pip packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-lint
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pylint black isort
+    
+    - name: Lint with flake8
+      run: |
+        echo "## Flake8 Linting Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Stop the build if there are Python syntax errors or undefined names
+        echo "**Critical Errors Check:**" >> $GITHUB_STEP_SUMMARY
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=venv,.venv,node_modules,.git,__pycache__
+        CRITICAL_ERRORS=$?
+        
+        if [ $CRITICAL_ERRORS -eq 0 ]; then
+          echo "✅ No critical syntax errors or undefined names" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Critical errors found - build failed" >> $GITHUB_STEP_SUMMARY
+          exit 1
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Code Quality Check:**" >> $GITHUB_STEP_SUMMARY
+        
+        # Check for code quality issues (warnings only)
+        flake8 . --count --max-complexity=10 --max-line-length=127 --statistics --exclude=venv,.venv,node_modules,.git,__pycache__,test_*.py,demo_*.py,verify_*.py,validate_*.py > flake8-report.txt || true
+        
+        WARNINGS=$(cat flake8-report.txt | tail -1 || echo "0")
+        echo "- Code quality warnings: $WARNINGS" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f flake8-report.txt ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<details><summary>View flake8 warnings</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          head -20 flake8-report.txt >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
+        fi
+      continue-on-error: false  # Critical linting errors must be fixed before merge
+    
+    - name: Check code formatting with black
+      run: |
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Code Formatting (Black)" >> $GITHUB_STEP_SUMMARY
+        
+        black --check --diff . --exclude="venv|node_modules|\.git" > black-report.txt 2>&1 || true
+        
+        if black --check . --exclude="venv|node_modules|\.git" 2>/dev/null; then
+          echo "✅ Code is properly formatted" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ Code formatting issues detected (non-blocking)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<details><summary>Run this command to auto-format</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo 'black . --exclude="venv|node_modules|\.git"' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
+        fi
+      continue-on-error: true
+    
+    - name: Check import sorting with isort
+      run: |
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Import Sorting (isort)" >> $GITHUB_STEP_SUMMARY
+        
+        if isort --check-only . --skip venv --skip .venv --skip node_modules --skip .git 2>/dev/null; then
+          echo "✅ Imports are properly sorted" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ Import sorting issues detected (non-blocking)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<details><summary>Run this command to auto-sort imports</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo 'isort . --skip venv --skip node_modules --skip .git' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
+        fi
+      continue-on-error: true
+    
+    - name: Analyze with pylint
+      run: |
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Pylint Analysis" >> $GITHUB_STEP_SUMMARY
+        
+        pylint *.py --exit-zero --ignore=venv,node_modules,.git,test_*.py,demo_*.py,verify_*.py,validate_*.py --max-line-length=127 --output-format=text > pylint-report.txt || true
+        
+        # Extract score from pylint output
+        SCORE=$(grep "Your code has been rated at" pylint-report.txt | grep -o '[0-9.]*\/10' | cut -d'/' -f1 || echo "0")
+        
+        echo "**Pylint Score:** $SCORE / 10.0" >> $GITHUB_STEP_SUMMARY
+        
+        # Use awk for numeric comparison (bc not available by default)
+        if awk -v score="$SCORE" 'BEGIN { exit !(score >= 7.0) }'; then
+          echo "✅ Code quality meets minimum standard (≥7.0)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ Code quality below recommended threshold (non-blocking)" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "<details><summary>View pylint details</summary>" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        tail -30 pylint-report.txt >> $GITHUB_STEP_SUMMARY || true
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "</details>" >> $GITHUB_STEP_SUMMARY
+      continue-on-error: true

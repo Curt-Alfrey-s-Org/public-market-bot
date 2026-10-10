@@ -1,0 +1,152 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run weekly on Sundays at 00:00 UTC
+    - cron: '0 0 * * 0'
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.11'
+    
+    - name: Cache pip packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-security
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade "pip>=26.0.1"
+        pip install safety bandit
+    - name: Ensure jq is installed
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y jq
+    
+    - name: Check dependencies for vulnerabilities with safety
+      id: safety_check
+      run: |
+        echo "## Dependency Security Scan (Safety)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Scan declared deps only (-r); do not scan the CI pip toolchain itself.
+        if safety check -r requirements.txt --output text > safety-output.txt 2>&1; then
+          SAFETY_STATUS="success"
+        else
+          SAFETY_STATUS="failed"
+        fi
+        safety check -r requirements.txt --json > safety-report.json 2>&1 || true
+        
+        if [ -f safety-report.json ] && [ -s safety-report.json ]; then
+          # Count vulnerabilities by severity
+          CRITICAL=$(jq '[.vulnerabilities[] | select(.severity == "CRITICAL" or .severity == "HIGH")] | length' safety-report.json 2>/dev/null || echo "0")
+          MEDIUM=$(jq '[.vulnerabilities[] | select(.severity == "MEDIUM")] | length' safety-report.json 2>/dev/null || echo "0")
+          LOW=$(jq '[.vulnerabilities[] | select(.severity == "LOW")] | length' safety-report.json 2>/dev/null || echo "0")
+          
+          echo "- Critical/High: $CRITICAL" >> $GITHUB_STEP_SUMMARY
+          echo "- Medium: $MEDIUM" >> $GITHUB_STEP_SUMMARY
+          echo "- Low: $LOW" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$CRITICAL" -eq 0 ]; then
+            echo "No critical vulnerabilities found in requirements.txt" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Critical vulnerabilities detected - build failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "<details><summary>View vulnerabilities</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat safety-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+        else
+          echo "No known vulnerabilities found in requirements.txt" >> $GITHUB_STEP_SUMMARY
+        fi
+      continue-on-error: false
+    
+    - name: Run bandit security linter
+      id: bandit_check
+      run: |
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Code Security Scan (Bandit)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Run bandit (exclude frontend/node trees; HIGH severity fails the job)
+        bandit -r . -f json -o bandit-report.json -ll -x ./venv,./node_modules,./frontend,./test_*.py,./demo_*.py,./verify_*.py,./validate_*.py 2>&1 || BANDIT_EXIT=$?
+        bandit -r . -f txt -ll -x ./venv,./node_modules,./frontend,./test_*.py,./demo_*.py,./verify_*.py,./validate_*.py > bandit-output.txt 2>&1 || true
+        
+        # Count issues by severity
+        if [ -f bandit-report.json ]; then
+          HIGH_COUNT=$(jq '[.results[] | select(.issue_severity == "HIGH")] | length' bandit-report.json 2>/dev/null || echo "0")
+          MEDIUM_COUNT=$(jq '[.results[] | select(.issue_severity == "MEDIUM")] | length' bandit-report.json 2>/dev/null || echo "0")
+          LOW_COUNT=$(jq '[.results[] | select(.issue_severity == "LOW")] | length' bandit-report.json 2>/dev/null || echo "0")
+          
+          echo "- High Severity Issues: $HIGH_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- Medium Severity Issues: $MEDIUM_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- Low Severity Issues: $LOW_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$HIGH_COUNT" -eq 0 ]; then
+            echo "No high-severity security issues detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**High-severity security issues found - build failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "<details><summary>View security issues</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat bandit-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          if [ "$MEDIUM_COUNT" -gt 0 ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Medium-severity issues detected - review recommended" >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo "No security issues detected" >> $GITHUB_STEP_SUMMARY
+        fi
+      continue-on-error: false
+    
+    - name: Generate security summary
+      run: |
+        echo "# Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Scan Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "For detailed reports, download the security-reports artifact from this workflow run." >> $GITHUB_STEP_SUMMARY
+      if: always()
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v6
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+        retention-days: 90
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: always()

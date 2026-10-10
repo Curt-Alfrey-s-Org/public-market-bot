@@ -1,0 +1,14 @@
+{
+  "export": {
+    "web": {
+      "output": "static"
+    }
+  },
+  "plugins": [
+    "expo-router"
+  ],
+  "scheme": "market-bot",
+  "extra": {
+    "apiUrl": "http://localhost:8004/api/v1"
+  }
+}

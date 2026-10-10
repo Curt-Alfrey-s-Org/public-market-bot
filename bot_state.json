@@ -1,0 +1,28 @@
+{
+  "last_cycle_at": "2026-02-11T06:07:52.733316Z",
+  "current_symbols": [
+    "MU",
+    "CVS",
+    "HUM",
+    "EL",
+    "ORCL",
+    "INTC",
+    "CHTR",
+    "AMD",
+    "SPGI",
+    "UNH"
+  ],
+  "no_trade_streak": {
+    "MU": 0,
+    "CVS": 0,
+    "HUM": 2,
+    "EL": 2,
+    "ORCL": 2,
+    "INTC": 2,
+    "CHTR": 2,
+    "AMD": 2,
+    "SPGI": 2,
+    "UNH": 2
+  },
+  "cycle_number": 20
+}

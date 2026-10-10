@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Pie5 Bot - Tooltip Demo</title>
+    <link rel="stylesheet" href="assets/css/enhanced-styles.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0e1117;
+            color: #ffffff;
+            padding: 40px;
+            line-height: 1.6;
+        }
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1a1d25;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #1d9bf0;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #8b949e;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #10b981;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #10b981;
+            padding-bottom: 8px;
+        }
+        .setting-item {
+            margin-bottom: 15px;
+        }
+        .label-with-tooltip {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .label-with-tooltip label {
+            margin-right: 6px;
+        }
+        .tooltip-icon {
+            cursor: help;
+            font-size: 14px;
+            opacity: 0.7;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .tooltip-icon:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        input, select {
+            width: 100%;
+            padding: 8px 12px;
+            background: #0e1117;
+            color: #ffffff;
+            border: 1px solid #808080;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        button {
+            padding: 10px 24px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-right: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        button.stop-btn {
+            background: #ef4444;
+        }
+        button.stop-btn:hover {
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        .info-box {
+            background: rgba(29, 155, 240, 0.1);
+            border: 1px solid #1d9bf0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .info-box h3 {
+            color: #1d9bf0;
+            margin-top: 0;
+            font-size: 16px;
+        }
+        .info-box ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .info-box li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>📊 Market Pie5 Bot - Tooltip Demo</h1>
+        <p class="subtitle">Hover over the ℹ️ icons to see helpful explanations!</p>
+
+        <!-- Action Buttons Demo -->
+        <div class="section">
+            <h2>Control Panel</h2>
+            <button title="Start the trading bot. Bot will begin analyzing stocks and placing trades based on your configured settings.">
+                🚀 Start Bot
+            </button>
+            <button class="stop-btn" title="Stop the trading bot. Current positions will be maintained but no new trades will be placed.">
+                ⏹ Stop Bot
+            </button>
+        </div>
+
+        <!-- Capital & Risk Management Demo -->
+        <div class="section">
+            <h2>Capital & Risk Management</h2>
+            
+            <div class="setting-item">
+                <div class="label-with-tooltip">
+                    <label>Total Capital ($):</label>
+                    <span class="tooltip-icon" title="Total amount of money allocated for trading. This is your starting balance and determines position sizes.">ℹ️</span>
+                </div>
+                <input type="number" value="500" />
+            </div>
+
+            <div class="setting-item">
+                <div class="label-with-tooltip">
+                    <label>Min Allocation ($):</label>
+                    <span class="tooltip-icon" title="Minimum dollar amount per trade. Bot will not place trades smaller than this value. Lower values allow more diversification.">ℹ️</span>
+                </div>
+                <input type="number" value="50" />
+            </div>
+
+            <div class="setting-item">
+                <div class="label-with-tooltip">
+                    <label>Capital Floor (% of starting capital):</label>
+                    <span class="tooltip-icon" title="Bot stops trading if capital falls below this percentage. Example: 10% of $500 = $50. Protects you from catastrophic losses.">ℹ️</span>
+                </div>
+                <input type="number" value="10" />
+            </div>
+        </div>
+
+        <!-- Stop Loss & Take Profit Demo -->
+        <div class="section">
+            <h2>Stop Loss & Take Profit</h2>
+            
+            <div class="setting-item">
+                <div class="label-with-tooltip">
+                    <label>Trailing Stop (%):</label>
+                    <span class="tooltip-icon" title="Automatically lock in profits as price rises. Sells when price drops by this percentage from the highest point. Example: 3% means sell if price drops 3% from peak.">ℹ️</span>
+                </div>
+                <input type="number" value="3" step="0.1" />
+            </div>
+
+            <div class="setting-item">
+                <div class="label-with-tooltip">
+                    <label>Dynamic Stop Enabled:</label>
+                    <span class="tooltip-icon" title="Adjusts stop loss based on market volatility. When enabled, stop loss widens in volatile markets and tightens in calm markets.">ℹ️</span>
+                </div>
+                <select>
+                    <option>Enabled</option>
+                    <option>Disabled</option>
+                </select>
+            </div>
+
+            <div class="setting-item">
+                <div class="label-with-tooltip">
+                    <label>Take Profit (%):</label>
+                    <span class="tooltip-icon" title="Target profit percentage. Automatically sells when price rises by this amount. Example: 10% means sell when price is 10% above entry.">ℹ️</span>
+                </div>
+                <input type="number" value="10" step="0.1" />
+            </div>
+        </div>
+
+        <!-- Stock Filtering Demo -->
+        <div class="section">
+            <h2>Stock Filtering</h2>
+            
+            <div class="setting-item">
+                <div class="label-with-tooltip">
+                    <label>Min Stock Price ($):</label>
+                    <span class="tooltip-icon" title="Minimum price per share. Filters out penny stocks which can be highly volatile and illiquid. Example: $5 minimum avoids stocks under $5.">ℹ️</span>
+                </div>
+                <input type="number" value="5" step="0.5" />
+            </div>
+
+            <div class="setting-item">
+                <div class="label-with-tooltip">
+                    <label>Max Stock Volatility:</label>
+                    <span class="tooltip-icon" title="Maximum allowed volatility (price fluctuation). Lower values filter out highly volatile stocks. Example: 0.15 means 15% max volatility.">ℹ️</span>
+                </div>
+                <input type="number" value="0.15" step="0.01" />
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <h3>✨ Tooltip Implementation Summary</h3>
+            <ul>
+                <li><strong>25+ tooltips</strong> added to Settings tab configuration inputs</li>
+                <li><strong>Control buttons</strong> now have helpful hover text</li>
+                <li><strong>Terminal commands</strong> include usage hints</li>
+                <li><strong>CSS enhancements</strong> for smooth hover animations</li>
+                <li><strong>Info icons (ℹ️)</strong> provide context-sensitive help</li>
+                <li><strong>Native HTML tooltips</strong> work on all modern browsers</li>
+            </ul>
+            <p><strong>Try it:</strong> Hover over any ℹ️ icon or button to see the tooltip in action!</p>
+        </div>
+        
+        <!-- Footer -->
+        <footer style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #30363d; text-align: center;">
+            <p style="color: #8b949e; font-size: 14px; margin: 0;">
+                Created by <a href="https://github.com/operator" target="_blank" style="color: #1d9bf0; text-decoration: none; font-weight: 600;">Curt Alfrey</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

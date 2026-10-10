@@ -1,0 +1,126 @@
+name: AI PR Triage
+
+# Posts a concise AI code review on pull requests using the ALFa AI brain
+# (LiteLLM `code` alias). The brain is LAN-only (), so this MUST run on a
+# self-hosted runner with LAN access. It degrades gracefully: if the brain or
+# secrets are missing, it writes a notice to the job summary and exits 0
+# (never blocks the PR).
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [ opened, synchronize, reopened ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ai-triage:
+    # Self-hosted runner required for LAN access to the ALFa AI brain on .
+    runs-on: [self-hosted, alfa-ai]
+    env:
+      LITELLM_BASE_URL: ${{ secrets.LITELLM_BASE_URL || 'http://192.0.2.30' }}
+      LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+      LITELLM_MODEL_CODE: ${{ secrets.LITELLM_MODEL_CODE || 'code' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build PR diff
+        id: diff
+        run: |
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+          git diff --unified=0 "$base" "$head" -- . ':(exclude)**/*.lock' ':(exclude)**/dist/**' \
+            ':(exclude)**/node_modules/**' > pr.diff || true
+          # Cap size to keep the prompt bounded
+          head -c 60000 pr.diff > pr.diff.capped || true
+          bytes=$(wc -c < pr.diff.capped || echo 0)
+          echo "bytes=$bytes" >> "$GITHUB_OUTPUT"
+
+      - name: AI review via LiteLLM (code)
+        id: review
+        continue-on-error: true
+        run: |
+          if [ -z "$LITELLM_API_KEY" ]; then
+            echo "LITELLM_API_KEY not configured — skipping AI triage." | tee review.md
+            exit 0
+          fi
+          if [ "${{ steps.diff.outputs.bytes }}" = "0" ]; then
+            echo "No reviewable diff." | tee review.md
+            exit 0
+          fi
+          python3 - <<'PY'
+          import json, os, sys, urllib.request
+
+          base = os.environ["LITELLM_BASE_URL"].rstrip("/")
+          key = os.environ["LITELLM_API_KEY"]
+          model = os.environ.get("LITELLM_MODEL_CODE", "code")
+          try:
+              diff = open("pr.diff.capped", encoding="utf-8", errors="ignore").read()
+          except Exception:
+              diff = ""
+
+          system = (
+              "You are a senior reviewer for the market-pie5-bot trading app. "
+              "Review this PR diff for correctness, security (secret handling, "
+              "injection), error handling, and clarity. Be concise. Group findings "
+              "as Critical / Warning / Suggestion. If nothing significant, say so."
+          )
+          payload = {
+              "model": model,
+              "messages": [
+                  {"role": "system", "content": system},
+                  {"role": "user", "content": diff[:50000]},
+              ],
+              "temperature": 0.1,
+              "max_tokens": 900,
+          }
+          req = urllib.request.Request(
+              f"{base}/v1/chat/completions",
+              data=json.dumps(payload).encode(),
+              headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=600) as r:
+                  data = json.load(r)
+              content = data["choices"][0]["message"]["content"]
+          except Exception as e:
+              content = f"AI triage unavailable: {type(e).__name__}: {e}"
+          with open("review.md", "w", encoding="utf-8") as f:
+              f.write(content)
+          print("Wrote review.md")
+          PY
+
+      - name: Post review summary
+        if: always()
+        run: |
+          echo "## 🤖 AI PR Triage (ALFa AI · LiteLLM code)" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f review.md ]; then
+            cat review.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "_No review produced._" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Comment on PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '## 🤖 AI PR Triage (ALFa AI · LiteLLM `code`)\n\n';
+            try {
+              body += fs.readFileSync('review.md', 'utf8');
+            } catch (e) {
+              body += '_No review produced._';
+            }
+            body += '\n\n_Automated, non-blocking. Not a substitute for human review._';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });

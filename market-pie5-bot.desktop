@@ -1,0 +1,24 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Market Pie5 Bot (Desktop GUI)
+Comment=Trading bot with desktop GUI - Compatible with Raspberry Pi 5, Linux Mint, Ubuntu, and Debian
+Exec=/home/pi/market-pie5-bot/start_bot.sh
+Icon=/home/pi/market-pie5-bot/market-pie5-icon.svg
+Terminal=true
+Categories=Finance;Office;
+Keywords=trading;stock;bot;finance;desktop;gui;linux;
+StartupNotify=true
+StartupWMClass=market-pie5-bot
+
+# Note: Update the Exec path to match your installation directory
+# For Raspberry Pi: /home/pi/market-pie5-bot/
+# For Linux Mint/Ubuntu: /home/YOUR_USERNAME/market-pie5-bot/
+# Or use: /home/$USER/market-pie5-bot/ (if your desktop environment supports it)
+# To install this desktop file:
+# 1. Update the Exec path above to match your installation
+# 2. Copy to ~/.local/share/applications/
+#    cp market-pie5-bot.desktop ~/.local/share/applications/
+# 3. Update desktop database:
+#    update-desktop-database ~/.local/share/applications/
+# 4. The icon will appear in your application menu under "Office" or "Finance"

@@ -1,0 +1,156 @@
+name: Copilot Auto Label
+
+on:
+  workflow_run:
+    workflows: ["Tests", "Lint", "Security", "E2E"]
+    types: [completed]
+  pull_request_target:
+    types: [synchronize, ready_for_review, labeled]
+
+jobs:
+  auto-label-when-green:
+    if: |
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.pull_requests &&
+      github.event.workflow_run.pull_requests.length > 0 &&
+      startsWith(github.event.workflow_run.head_branch, 'copilot/')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+      contents: read
+      actions: read
+    steps:
+      - name: Add label when all required workflows succeeded
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.workflow_run.pull_requests[0];
+            const headBranch = context.payload.workflow_run.head_branch;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const requiredFiles = [
+              '.github/workflows/tests.yml',
+              '.github/workflows/lint.yml',
+              '.github/workflows/security.yml',
+              '.github/workflows/e2e.yml'
+            ];
+
+            async function getLatestConclusionForWorkflow(file, branch){
+              const wf = await github.rest.actions.getWorkflow({ owner, repo, workflow_id: file });
+              const runs = await github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: wf.data.id, branch, event: 'pull_request', per_page: 10 });
+              const run = runs.data.workflow_runs.find(r => r.head_branch === branch);
+              return run ? run.conclusion : null;
+            }
+
+            const conclusions = [];
+            for (const file of requiredFiles) {
+              try {
+                const c = await getLatestConclusionForWorkflow(file, headBranch);
+                conclusions.push({ file, conclusion: c });
+              } catch (e) {
+                core.warning(`Unable to read workflow ${file}: ${e.message}`);
+                conclusions.push({ file, conclusion: null });
+              }
+            }
+
+            const missing = conclusions.filter(x => x.conclusion !== 'success');
+            if (missing.length > 0) {
+              core.notice(`Not labeling yet; pending/failed: ${missing.map(m => m.file).join(', ')}`);
+              return;
+            }
+
+            // Ensure label exists
+            const labelName = 'copilot-completed';
+            const labelColor = 'FCF7A1';
+            let hasLabel = false;
+            try {
+              const labelsList = await github.rest.issues.listLabelsForRepo({ owner, repo, per_page: 100 });
+              hasLabel = labelsList.data.some(l => (l.name || '').toLowerCase() === labelName);
+            } catch(e) {
+              core.warning(`Unable to list labels: ${e.message}`);
+            }
+
+            if (!hasLabel) {
+              try {
+                await github.rest.issues.createLabel({ owner, repo, name: labelName, color: labelColor, description: 'Copilot work completed' });
+                core.notice('Created missing label copilot-completed');
+              } catch(e) {
+                core.warning(`Unable to create label: ${e.message}`);
+              }
+            }
+
+            try {
+              await github.rest.issues.addLabels({ owner, repo, issue_number: pr.number, labels: [labelName] });
+              core.notice(`Added label '${labelName}' to PR #${pr.number}`);
+            } catch(e) {
+              core.setFailed(`Failed to add label to PR #${pr.number}: ${e.message}`);
+            }
+
+  auto-label-on-pr-updates:
+    if: |
+      github.event_name == 'pull_request_target' &&
+      startsWith(github.event.pull_request.head.ref, 'copilot/')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+      contents: read
+      checks: read
+    steps:
+      - name: Label when all check runs are successful
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Fetch all check runs for the head SHA
+            const checks = await github.rest.checks.listForRef({ owner, repo, ref: pr.head.sha, per_page: 100 });
+            const runs = checks.data.check_runs || [];
+            if (runs.length === 0) {
+              core.notice('No check runs found yet; skipping label.');
+              return;
+            }
+
+            const incomplete = runs.filter(r => r.status !== 'completed');
+            if (incomplete.length > 0) {
+              core.notice(`Pending checks: ${incomplete.map(r => r.name).join(', ')}`);
+              return;
+            }
+
+            const failures = runs.filter(r => ['failure','cancelled','timed_out','action_required','stale'].includes((r.conclusion || '').toLowerCase()));
+            if (failures.length > 0) {
+              core.notice(`Found failing checks: ${failures.map(r => r.name).join(', ')}`);
+              return;
+            }
+
+            // Ensure label exists
+            const labelName = 'copilot-completed';
+            const labelColor = 'FCF7A1';
+            let hasLabel = false;
+            try {
+              const labelsList = await github.rest.issues.listLabelsForRepo({ owner, repo, per_page: 100 });
+              hasLabel = labelsList.data.some(l => (l.name || '').toLowerCase() === labelName);
+            } catch(e) {
+              core.warning(`Unable to list labels: ${e.message}`);
+            }
+
+            if (!hasLabel) {
+              try {
+                await github.rest.issues.createLabel({ owner, repo, name: labelName, color: labelColor, description: 'Copilot work completed' });
+                core.notice('Created missing label copilot-completed');
+              } catch(e) {
+                core.warning(`Unable to create label: ${e.message}`);
+              }
+            }
+
+            try {
+              await github.rest.issues.addLabels({ owner, repo, issue_number: pr.number, labels: [labelName] });
+              core.notice(`Added label '${labelName}' to PR #${pr.number}`);
+            } catch(e) {
+              core.setFailed(`Failed to add label to PR #${pr.number}: ${e.message}`);
+            }

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Pie5 Bot - Visual Enhancements Demo</title>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Custom Enhanced Styles -->
+    <link rel="stylesheet" href="assets/css/enhanced-styles.css">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .demo-section {
+            margin-bottom: 40px;
+        }
+        
+        .demo-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .demo-button {
+            padding: 12px 24px;
+            margin: 5px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .demo-button.success {
+            background: var(--success-color);
+        }
+        
+        .demo-button.danger {
+            background: var(--danger-color);
+        }
+        
+        .demo-button.warning {
+            background: var(--warning-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <header class="fade-in">
+            <h1 class="gradient-text"><i class="fas fa-chart-line"></i> Market Pie5 Visual Enhancements Demo</h1>
+            <p style="color: var(--text-secondary); font-size: 18px;">
+                Node.js-powered visual improvements for the web browser interface
+            </p>
+        </header>
+        
+        <!-- Stats Cards Demo -->
+        <section class="demo-section">
+            <h2><i class="fas fa-chart-bar"></i> Animated Stat Cards</h2>
+            <div class="demo-grid">
+                <div class="stat-card modern-card slide-in-left">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
+                        <i class="fas fa-wallet"></i> Total Capital
+                    </div>
+                    <div class="animate-number currency" style="font-size: 28px; font-weight: 700;">$10,500.00</div>
+                    <div style="font-size: 12px; color: var(--success-color); margin-top: 4px;">
+                        <i class="fas fa-arrow-up"></i> +$500.00 (5.0%)
+                    </div>
+                </div>
+                
+                <div class="stat-card modern-card fade-in">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
+                        <i class="fas fa-dollar-sign"></i> Allocation
+                    </div>
+                    <div class="animate-number currency" style="font-size: 28px; font-weight: 700;">$250.00</div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Per Trade</div>
+                </div>
+                
+                <div class="stat-card modern-card slide-in-right">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
+                        <i class="fas fa-bullseye"></i> Win Rate
+                    </div>
+                    <div class="animate-number percentage" style="font-size: 28px; font-weight: 700; color: var(--success-color);">65.5%</div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">42 trades</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Status Indicators Demo -->
+        <section class="demo-section">
+            <h2><i class="fas fa-circle"></i> Status Indicators</h2>
+            <div class="modern-card">
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div>
+                        <span class="status-indicator status-running"></span>
+                        <span>Running</span>
+                    </div>
+                    <div>
+                        <span class="status-indicator status-stopped"></span>
+                        <span>Stopped</span>
+                    </div>
+                    <div>
+                        <span class="status-indicator status-paused"></span>
+                        <span>Paused</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Badges Demo -->
+        <section class="demo-section">
+            <h2><i class="fas fa-tags"></i> Badges & Labels</h2>
+            <div class="modern-card">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <span class="badge badge-success"><i class="fas fa-check"></i> WIN</span>
+                    <span class="badge badge-danger"><i class="fas fa-times"></i> LOSS</span>
+                    <span class="badge badge-warning"><i class="fas fa-exclamation"></i> WARNING</span>
+                    <span class="badge badge-info"><i class="fas fa-info"></i> INFO</span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Interactive Buttons Demo -->
+        <section class="demo-section">
+            <h2><i class="fas fa-hand-pointer"></i> Interactive Buttons (with Ripple Effect)</h2>
+            <div class="modern-card">
+                <button class="demo-button" onclick="testToast('info')">
+                    <i class="fas fa-info-circle"></i> Show Info Toast
+                </button>
+                <button class="demo-button success" onclick="testToast('success')">
+                    <i class="fas fa-check-circle"></i> Show Success Toast
+                </button>
+                <button class="demo-button danger" onclick="testToast('error')">
+                    <i class="fas fa-times-circle"></i> Show Error Toast
+                </button>
+                <button class="demo-button warning" onclick="testToast('warning')">
+                    <i class="fas fa-exclamation-triangle"></i> Show Warning Toast
+                </button>
+            </div>
+        </section>
+        
+        <!-- Chart Demo -->
+        <section class="demo-section">
+            <h2><i class="fas fa-chart-area"></i> Enhanced Chart Container</h2>
+            <div class="chart-container scale-up modern-card">
+                <canvas id="demoChart" style="width: 100%; height: 300px;"></canvas>
+            </div>
+        </section>
+        
+        <!-- Loading States Demo -->
+        <section class="demo-section">
+            <h2><i class="fas fa-spinner"></i> Loading States</h2>
+            <div class="demo-grid">
+                <div class="modern-card">
+                    <h4>Shimmer Effect</h4>
+                    <div class="loading-shimmer" style="height: 100px; border-radius: 8px;"></div>
+                </div>
+                <div class="modern-card">
+                    <h4>Skeleton Loader</h4>
+                    <div class="skeleton" style="height: 100px; border-radius: 8px;"></div>
+                </div>
+                <div class="modern-card">
+                    <h4>Pulse Animation</h4>
+                    <div class="pulse" style="height: 100px; background: var(--primary-color); border-radius: 8px;"></div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Glassmorphism Demo -->
+        <section class="demo-section">
+            <h2><i class="fas fa-glasses"></i> Glassmorphism Effect</h2>
+            <div style="background: linear-gradient(135deg, var(--primary-color), var(--success-color)); padding: 40px; border-radius: 12px;">
+                <div class="glass-effect" style="padding: 30px; border-radius: 12px;">
+                    <h3 style="margin-top: 0;">Glass Effect Card</h3>
+                    <p>This card has a modern glassmorphism effect with backdrop blur.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Tooltip Demo -->
+        <section class="demo-section">
+            <h2><i class="fas fa-comment-dots"></i> Tooltips</h2>
+            <div class="modern-card">
+                <button class="demo-button" data-tooltip="This is a helpful tooltip!">
+                    <i class="fas fa-question-circle"></i> Hover for Tooltip
+                </button>
+            </div>
+        </section>
+    </div>
+    
+    <!-- Footer -->
+    <footer style="max-width: 1200px; margin: 40px auto 0; padding-top: 20px; border-top: 1px solid #30363d; text-align: center;">
+        <p style="color: #8b949e; font-size: 14px; margin: 0;">
+            Created by <a href="https://github.com/operator" target="_blank" style="color: #1d9bf0; text-decoration: none; font-weight: 600;">Curt Alfrey</a>
+        </p>
+    </footer>
+    
+    <!-- External Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/"></script>
+    
+    <!-- Custom Enhanced UI -->
+    <script src="assets/js/enhanced-ui.js"></script>
+    
+    <script>
+        // Demo Chart
+        const ctx = document.getElementById('demoChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Portfolio Value',
+                    data: [10000, 10200, 10500, 10300, 10800, 11000],
+                    borderColor: '#1d9bf0',
+                    backgroundColor: 'rgba(29, 155, 240, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            color: '#8b949e'
+                        },
+                        grid: {
+                            color: '#30363d'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#8b949e'
+                        },
+                        grid: {
+                            color: '#30363d'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Test toast function
+        function testToast(type) {
+            const messages = {
+                info: 'This is an informational message',
+                success: 'Operation completed successfully!',
+                error: 'An error occurred!',
+                warning: 'Warning: Please check your settings'
+            };
+            
+            MarketPie5UI.showToast(messages[type], type, 3000);
+        }
+    </script>
+</body>
+</html>

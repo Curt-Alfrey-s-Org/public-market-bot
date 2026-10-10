@@ -1,0 +1,142 @@
+# Market Bot - Docker Compose Configuration
+# API uses user: ${HOST_UID}:${HOST_GID} so bind mounts (data, logs, bot_state) stay owned by the host deploy user.
+# Generate .env.compose-host-user: source scripts/export_compose_uid_gid.sh && write_compose_host_user_env "$PWD"
+# Pass to compose: --env-file .env.compose-host-user (and --env-file .env if present).
+# ⚠️ CRITICAL - DO NOT MODIFY:
+#    - Network name: tunnel_network (hardcoded in cf-alfa tunnel)
+#    - Port 8004: Coordinated with nginx, tunnel routing, monitoring
+#    - 127.0.0.1 binding: Security requirement (APIs localhost only)
+#    - See: .github/PORT_ASSIGNMENTS.md for complete reference
+# (top-level `version:` removed — obsolete per Compose Specification:
+#  https://docs.docker.com/reference/compose-file/version-and-name/)
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: market-pie5-bot-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-marketbot}
+      POSTGRES_USER: ${POSTGRES_USER:-marketbot_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    ports:
+      - "127.0.0.1:5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    restart: unless-stopped
+    stop_signal: SIGTERM
+    stop_grace_period: 10s
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-marketbot_user} -d ${POSTGRES_DB:-marketbot}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - market-bot-network
+
+  market-bot-api:
+    build: .
+    container_name: market-pie5-bot-api
+    # Match host UID/GID so ./data, ./logs, ./bot_state.json are not root-owned (see .env.compose-host-user)
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Using 127.0.0.1 for security - only nginx can access via Docker network
+    ports:
+      - "127.0.0.1:8004:8000"
+    volumes:
+      - ./bot_state.json:/app/bot_state.json
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - PAPER_TRADING_MODE=${PAPER_TRADING_MODE:-true}
+      - SCHWAB_SANDBOX_MODE=${SCHWAB_SANDBOX_MODE:-true}
+      - ENABLE_PDT_RULES=${ENABLE_PDT_RULES:-false}
+      # Server-to-server/scripts only (X-API-Key). Never passed to the frontend build;
+      # admin-only control endpoints require an admin JWT and ignore this key.
+      - BOT_API_KEY=${BOT_API_KEY}
+      # Pydantic Settings expects this field; DATABASE_URL alone is not mapped to postgres_password.
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      # JWT signing secret: REQUIRED when ENVIRONMENT=production (API refuses to start
+      # without it). Generate: python -c "import secrets; print(secrets.token_urlsafe(48))"
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - DIRECTOR_USERNAME=${DIRECTOR_USERNAME:-director}
+      - DIRECTOR_PASSWORD=${DIRECTOR_PASSWORD}
+      - USER_USERNAME=${USER_USERNAME:-user}
+      - USER_PASSWORD=${USER_PASSWORD}
+      - DATABASE_URL=${DATABASE_URL}
+      - DB_POOL_SIZE=${DB_POOL_SIZE:-10}
+      - DB_MAX_OVERFLOW=${DB_MAX_OVERFLOW:-20}
+      - DB_POOL_TIMEOUT=${DB_POOL_TIMEOUT:-30}
+      - DB_POOL_RECYCLE=${DB_POOL_RECYCLE:-3600}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ERROR_MONITOR_ENABLED=${ERROR_MONITOR_ENABLED:-true}
+      - ERROR_MONITOR_INTERVAL_SECONDS=${ERROR_MONITOR_INTERVAL_SECONDS:-600}
+      - ERROR_MONITOR_BATCH_SIZE=${ERROR_MONITOR_BATCH_SIZE:-1}
+      - DEBUG=${DEBUG:-false}
+      # Optional: persist GUI mode/settings changes on the data volume, e.g.
+      # BOT_RUNTIME_ENV_FILE=/app/data/runtime.env. Empty = not persisted (see api/runtime_env.py).
+      - BOT_RUNTIME_ENV_FILE=${BOT_RUNTIME_ENV_FILE:-}
+      # ALFa AI brain (shared LiteLLM proxy on 192.0.2.30, reached over HTTP).
+      # BOT_REQUIRE_BRAIN=true (default) refuses to start the bot unless LiteLLM is
+      # enabled, has a key, and is reachable. The key comes from the env only.
+      - BOT_REQUIRE_BRAIN=${BOT_REQUIRE_BRAIN:-true}
+      - LITELLM_ENABLED=${LITELLM_ENABLED:-true}
+      - LITELLM_BASE_URL=${LITELLM_BASE_URL:-http://192.0.2.30:8000}
+      - LITELLM_API_KEY=${LITELLM_API_KEY}
+      - LITELLM_API_KEY_APP=${LITELLM_API_KEY_APP:-}
+      - LITELLM_API_KEY_INTERNAL=${LITELLM_API_KEY_INTERNAL:-}
+      - LITELLM_MODEL_CHAT=${LITELLM_MODEL_CHAT:-app-chat}
+      - LITELLM_MODEL_INTERNAL=${LITELLM_MODEL_INTERNAL:-code}
+      - LITELLM_TIMEOUT=${LITELLM_TIMEOUT:-600}
+    restart: unless-stopped
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - market-bot-network
+
+  market-bot-frontend:
+    # No secrets are passed to the frontend build: the browser authenticates
+    # with the logged-in user's JWT (security review 2026-09-25).
+    build:
+      context: ./frontend
+    container_name: market-pie5-bot-frontend
+    depends_on:
+      market-bot-api:
+        condition: service_healthy
+    # Nginx reverse proxy serving frontend and proxying API
+    ports:
+      - "0.0.0.0:5176:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - market-bot-network
+      - tunnel_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  market-bot-network:
+    driver: bridge
+    name: market-bot-network
+  tunnel_network:
+    external: true

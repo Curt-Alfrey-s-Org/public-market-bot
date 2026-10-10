@@ -1,0 +1,74 @@
+# Git and IDE
+.git
+.gitignore
+.cursor
+.vscode
+.idea
+
+# Virtual env (huge; not needed in image)
+venv/
+ENV/
+env/
+*.swp
+*~
+
+# Docs and non-runtime
+docs/
+*.md
+!README.md
+
+# Tests and one-off scripts (not needed in API container)
+tests/
+archive/
+test_*.py
+validate_*.py
+verify_*.py
+diagnostic.py
+diagnose_api_connection.sh
+run_*.py
+deploy_*.py
+check_*.py
+reset_*.py
+train_*.py
+visual-demo.html
+
+# Frontend (built separately)
+frontend/
+
+# Environment and secrets
+.env
+.env.*
+.token.key
+token.json
+
+# Logs, reports, caches
+*.log
+logs/
+reports/
+.pytest_cache/
+.coverage
+htmlcov/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Data and state (mount at runtime instead)
+runs/
+data/
+*.db
+bot_state.json
+trade_history_*.json
+backtest_*.json
+ml_optimization_*.json
+*.pkl
+
+# Node (if any in root)
+node_modules/
+
+# Misc
+.DS_Store
+*.bak
+*.tmp

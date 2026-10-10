@@ -1,0 +1,333 @@
+/* Draggable Grid Layout System for Market Pie5 Bot */
+/* Enables movable and resizable dashboard components */
+
+/* Use CSS variables from enhanced-theme.css */
+:root {
+    /* Ensure compatibility - redefine if not using enhanced-theme.css */
+    --border-color: var(--border, #30363d);
+    --primary-color: var(--primary, #1d9bf0);
+}
+
+/* Grid Container */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 16px;
+    padding: 20px;
+    min-height: calc(100vh - 200px);
+}
+
+/* Draggable Widget Base Styles */
+.draggable-widget {
+    background: var(--bg-card, #1a1f2e);
+    border: 1px solid var(--border, #30363d);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.2));
+    transition: all 0.3s ease;
+    cursor: move;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Glassmorphism Effect */
+.draggable-widget.glass {
+    background: rgba(26, 29, 37, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Widget Header */
+.widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border, #30363d);
+    cursor: move;
+}
+
+.widget-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary, #e6edf3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.widget-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.widget-control-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #8b949e);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.widget-control-btn:hover {
+    background: var(--bg-secondary, #13171f);
+    color: var(--text-primary, #e6edf3);
+}
+
+/* Drag States */
+.draggable-widget.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+    cursor: grabbing;
+    z-index: 1000;
+}
+
+.draggable-widget:hover {
+    box-shadow: var(--shadow-md, 0 4px 16px rgba(0, 0, 0, 0.3));
+    border-color: var(--primary, #1d9bf0);
+}
+
+.draggable-widget.drag-over {
+    border: 2px dashed var(--primary, #1d9bf0);
+    background: rgba(29, 155, 240, 0.1);
+}
+
+/* Widget Sizes */
+.widget-small {
+    grid-column: span 3;
+    grid-row: span 1;
+}
+
+.widget-medium {
+    grid-column: span 4;
+    grid-row: span 1;
+}
+
+.widget-large {
+    grid-column: span 6;
+    grid-row: span 2;
+}
+
+.widget-full {
+    grid-column: span 12;
+    grid-row: span 1;
+}
+
+/* Resize Handle */
+.resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: se-resize;
+    background: linear-gradient(135deg, transparent 50%, var(--primary, #1d9bf0) 50%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.draggable-widget:hover .resize-handle {
+    opacity: 0.6;
+}
+
+.resize-handle:hover {
+    opacity: 1;
+}
+
+/* Layout Controls */
+.layout-controls {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: var(--shadow-lg);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.layout-control-btn {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.layout-control-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Responsive Grid */
+@media (max-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(8, 1fr);
+    }
+    
+    .widget-small {
+        grid-column: span 4;
+    }
+    
+    .widget-medium {
+        grid-column: span 4;
+    }
+    
+    .widget-large {
+        grid-column: span 8;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        padding: 12px;
+    }
+    
+    .widget-small,
+    .widget-medium,
+    .widget-large {
+        grid-column: span 4;
+    }
+    
+    .layout-controls {
+        bottom: 20px;
+        right: 20px;
+        top: auto;
+    }
+}
+
+/* Smooth Transitions */
+.dashboard-grid.transitioning .draggable-widget {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Widget Content Area */
+.widget-content {
+    position: relative;
+    height: 100%;
+    overflow: auto;
+}
+
+/* Custom Scrollbar for Widgets */
+.widget-content::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.widget-content::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 3px;
+}
+
+.widget-content::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.widget-content::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+/* Collapse Animation */
+.widget-collapsed .widget-content {
+    display: none;
+}
+
+.widget-collapsed {
+    grid-row: span 1 !important;
+    min-height: 60px;
+}
+
+/* Loading State */
+.widget-loading {
+    position: relative;
+}
+
+.widget-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(29, 155, 240, 0.1) 50%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Theme Toggle for Widgets */
+.widget-theme-dark {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.widget-theme-light {
+    background: #ffffff;
+    color: #1a1d25;
+}
+
+/* Drag Handle Indicator */
+.drag-handle {
+    cursor: move;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+}
+
+.drag-handle:hover {
+    color: var(--primary-color);
+}
+
+/* Widget Animation on Load */
+@keyframes widget-appear {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.draggable-widget {
+    animation: widget-appear 0.4s ease-out;
+}
+
+/* Stagger animation for multiple widgets */
+.draggable-widget:nth-child(1) { animation-delay: 0s; }
+.draggable-widget:nth-child(2) { animation-delay: 0.05s; }
+.draggable-widget:nth-child(3) { animation-delay: 0.1s; }
+.draggable-widget:nth-child(4) { animation-delay: 0.15s; }
+.draggable-widget:nth-child(5) { animation-delay: 0.2s; }
+.draggable-widget:nth-child(6) { animation-delay: 0.25s; }

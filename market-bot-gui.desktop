@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Market Bot GUI
+Comment=Modern React + FastAPI Trading Bot Dashboard
+Exec=/home/operator/market-bot/market-pie5-bot/start_gui.sh
+Icon=/home/operator/market-bot/market-pie5-bot/assets/icon.png
+Terminal=true
+Categories=Finance;Trading;Development;
+Keywords=trading;bot;dashboard;finance;
+StartupNotify=true
+MimeType=
+NoDisplay=false

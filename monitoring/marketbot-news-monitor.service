@@ -1,0 +1,26 @@
+[Unit]
+Description=Market Bot News Monitoring Daemon (24/7)
+After=network.target
+
+[Service]
+Type=simple
+User=operator
+Group=operator
+WorkingDirectory=/home/operator/market-bot/market-pie5-bot
+Environment="PATH=/home/operator/market-bot/market-pie5-bot/venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/operator/market-bot/market-pie5-bot/venv/bin/python monitoring/news_daemon.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/tmp/news_daemon.log
+StandardError=append:/tmp/news_daemon_error.log
+
+# Resource limits
+MemoryLimit=512M
+CPUQuota=25%
+
+# Sandboxing (optional security hardening)
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

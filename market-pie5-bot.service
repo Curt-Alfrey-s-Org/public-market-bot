@@ -1,0 +1,43 @@
+[Unit]
+Description=Market Pie5 Trading Bot Service
+Documentation=https://github.com/Curt-Alfrey-s-Org/market-pie5-bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Service execution user and group - change to appropriate user (typically the one running the bot)
+User=operator
+Group=operator
+
+# Working directory - update this to your installation path
+WorkingDirectory=/home/operator/market-bot/market-pie5-bot
+
+# Environment variables - load from .env file
+EnvironmentFile=/home/operator/market-bot/market-pie5-bot/.env
+
+# Service execution
+Type=simple
+ExecStart=/home/operator/market-bot/market-pie5-bot/venv/bin/python3 /home/operator/market-bot/market-pie5-bot/main.py
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=60s
+StartLimitBurst=3
+
+# Security and resource limits
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=market-pie5-bot
+
+# Resource limits (optional - customize based on your hardware)
+# MemoryLimit=512M
+# CPUQuota=80%
+
+# Process management
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
