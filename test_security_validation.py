@@ -258,9 +258,10 @@ class TestSecureConfiguration(unittest.TestCase):
         
         # Check for suspicious patterns
         suspicious_patterns = [
-            'password ='change-me'api_key = "',
-            'secret = "',
-            'token = "'
+            "password = \"",
+            "api_key = \"",
+            "secret = \"",
+            "token = \"",
         ]
         
         # Verify no direct credential assignments
