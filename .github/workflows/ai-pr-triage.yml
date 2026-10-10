@@ -24,7 +24,7 @@ jobs:
       LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
       LITELLM_MODEL_CODE: ${{ secrets.LITELLM_MODEL_CODE || 'code' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

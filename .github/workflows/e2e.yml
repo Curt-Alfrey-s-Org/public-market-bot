@@ -15,7 +15,7 @@ jobs:
       contents: read
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     
     - name: Set up Python
       uses: actions/setup-python@v6
@@ -90,7 +90,7 @@ jobs:
             # Paper trading with sandbox uses Schwab's sandbox API
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     
     - name: Set up Python
       uses: actions/setup-python@v6
@@ -155,7 +155,7 @@ jobs:
       contents: read
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     
     - name: Set up Python
       uses: actions/setup-python@v6
