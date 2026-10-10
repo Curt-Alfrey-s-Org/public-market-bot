@@ -55,7 +55,7 @@ export default function RegisterForm({ appName }: RegisterFormProps) {
     const pwdErr = validatePassword(password)
     if (pwdErr) errs.password = pwdErr
     if (password !== confirmPassword) {
-      errs.confirmPassword = 'change-me'
+      errs.confirmPassword = 'Passwords do not match'
     }
     if (!licenseKey.trim()) {
       errs.licenseKey = 'License key is required'
@@ -76,7 +76,7 @@ export default function RegisterForm({ appName }: RegisterFormProps) {
           email: email.trim().toLowerCase(),
           password,
           license_key: licenseKey.trim(),
-          captcha_token: 'change-me'
+          captcha_token: 'dummy-captcha'
         })
       })
 
