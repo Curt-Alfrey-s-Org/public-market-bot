@@ -1,33 +1,75 @@
-# market-pie5-bot (public snapshot)
+# public-market-bot
 
-Paper-trading bot with an API, a web UI, and an optional LLM gateway. This tree is a scrubbed snapshot. See `docs/PUBLIC_SNAPSHOT.md`.
+Paper-trading stack: FastAPI backend, React web UI, and PostgreSQL. **Live trading stays off by default** (`PAPER_TRADING_MODE=true`). You supply your own API keys and secrets; nothing in this repo is pre-filled for a specific operator.
 
-License: GNU General Public License version 3. See `LICENSE`.
+**License:** GNU General Public License v3.0 — see [LICENSE](LICENSE).
 
-The shipped example keeps paper trading on (`PAPER_TRADING_MODE=true`). Leave live trading off until you choose to enable it on your own machine.
+## Requirements
 
-## Configure before you run
+- [Docker Engine](https://docs.docker.com/engine/install/) and [Docker Compose](https://docs.docker.com/compose/) (Compose V2: `docker compose`)
+- Schwab developer credentials (optional until you connect a broker; sandbox mode is the default)
+- Optional: an OpenAI-compatible LLM gateway (LiteLLM or similar) if you want AI-assisted features
 
-1. Copy `config/hosts.example.env` to `config/hosts.env`. Do not commit `hosts.env`.
-2. Copy `.env.example` to `.env` and replace every `change-me` placeholder. Never commit `.env`.
-3. Set `LITELLM_BASE_URL` only when you run your own gateway.
+## Quick start
 
-## Ports
+1. **Clone** this repository.
 
-From `docker-compose.yml` in this repo:
+2. **Configure environment**
 
-| Service | Published address |
-|---------|-------------------|
-| postgres | `127.0.0.1:5435` (container `5432`) |
-| market-bot-api | `127.0.0.1:8004` (container `8000`) |
-| market-bot-frontend | port `5176` (container `80`) |
+   ```bash
+   cp .env.example .env
+   ```
 
-## Run
+   Copy the required auth lines from [env.required.example](env.required.example) into `.env` (or merge that file). Replace every `change-me` value with your own secrets. Generate a JWT secret, for example:
+
+   ```bash
+   python -c "import secrets; print(secrets.token_urlsafe(48))"
+   ```
+
+   Optional host URLs (documentation-only addresses): copy [config/hosts.example.env](config/hosts.example.env) to `config/hosts.env` and adjust if you use a custom LLM base URL.
+
+   **Paper trading:** keep `PAPER_TRADING_MODE=true` and `SCHWAB_SANDBOX_MODE=true` until you deliberately go live.
+
+   **Without an LLM gateway:** set `BOT_REQUIRE_BRAIN=false` and `LITELLM_ENABLED=false` in `.env` so the API starts without LiteLLM.
+
+   Never commit `.env` or `config/hosts.env`.
+
+3. **Create the external Compose network** (required once per Docker host; the frontend service attaches to it):
+
+   ```bash
+   docker network create tunnel_network
+   ```
+
+4. **Start the stack** ([Compose file reference](https://docs.docker.com/reference/compose-file/)):
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+5. **Open the UI** at [http://127.0.0.1:5176](http://127.0.0.1:5176). The API listens on `127.0.0.1:8004`; Postgres on `127.0.0.1:5435`.
+
+## Ports (from `docker-compose.yml`)
+
+| Service            | Host address        |
+|--------------------|---------------------|
+| market-bot-frontend | `5176` → container `80` |
+| market-bot-api     | `127.0.0.1:8004` → `8000` |
+| postgres           | `127.0.0.1:5435` → `5432` |
+
+## Health checks
 
 ```bash
-docker compose up -d
+docker compose ps
+curl -fsS http://127.0.0.1:8004/api/health
+curl -fsS http://127.0.0.1:5176/
 ```
 
-Open the UI on port 5176. The API and Postgres listen on localhost.
+## Further reading
 
-This program is experimental. It is not financial advice. You are responsible for any orders and for your own API credentials.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — development notes
+- [docs/PUBLIC_SNAPSHOT.md](docs/PUBLIC_SNAPSHOT.md) — what this public tree includes
+- [docs/USER_GUIDE.md](docs/USER_GUIDE.md) — using the web GUI
+
+## Disclaimer
+
+Experimental software, not financial advice. You are responsible for orders, compliance, and safeguarding your credentials.
