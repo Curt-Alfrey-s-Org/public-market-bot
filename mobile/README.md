@@ -600,7 +600,7 @@ Tokens expire after 24 hours. The app automatically refreshes tokens on 401 resp
 
 ## License
 
-Proprietary - Alfa Quantum Dynamics
+GPL-3.0. See the repository LICENSE.
 
 ## Support
 

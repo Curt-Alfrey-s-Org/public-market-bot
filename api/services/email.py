@@ -29,7 +29,7 @@ async def send_verification_email(to_email: str, username: str, token: str) -> b
             return False
         
         # Get bot name from environment or default
-        bot_name = os.getenv('BOT_NAME', 'Alfa Quantum Dynamics')
+        bot_name = os.getenv('BOT_NAME', 'Market Bot')
         
         # Build verification URL - will be set by frontend
         verification_url = f"https://example.com/verify-email?token={token}"
@@ -99,7 +99,7 @@ async def send_password_reset_email(to_email: str, username: str, token: str) ->
             logger.warning("SMTP_PASSWORD not configured, cannot send email")
             return False
         
-        bot_name = os.getenv('BOT_NAME', 'Alfa Quantum Dynamics')
+        bot_name = os.getenv('BOT_NAME', 'Market Bot')
         reset_url = f"https://example.com/reset-password?token={token}"
         
         # Create email
